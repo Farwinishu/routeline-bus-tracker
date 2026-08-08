@@ -1,64 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin login — RouteLine</title>
-<link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
-<div class="admin-login-shell">
-  <div class="admin-login-card">
-    <div class="admin-login-mark">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin login — RouteLine</title>
+    <link rel="stylesheet" href="../css/admin.css" />
+  </head>
+  <body>
+    <div class="admin-login-shell">
+      <div class="admin-login-card">
+        <div class="admin-login-mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9"
+              stroke="#FBF7EE"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+            <rect
+              x="4"
+              y="12"
+              width="16"
+              height="6"
+              rx="1.2"
+              stroke="#FBF7EE"
+              stroke-width="1.8"
+            />
+          </svg>
+        </div>
+        <h1>RouteLine Admin</h1>
+        <p class="lead">
+          Manage buses, routes and payment records. This console is separate
+          from the passenger site.
+        </p>
+
+        <form id="loginForm">
+          <div class="admin-field">
+            <label for="email">Admin email</label>
+            <input
+              type="email"
+              id="email"
+              value="admin@routeline.lk"
+              required
+            />
+          </div>
+          <div class="admin-field">
+            <label for="pw">Password</label>
+            <input type="password" id="pw" value="admin123" required />
+          </div>
+          <div
+            id="loginError"
+            style="
+              display: none;
+              color: #c1432e;
+              font-size: 13px;
+              margin: -6px 0 14px;
+            "
+          ></div>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            style="width: 100%"
+            id="loginBtn"
+          >
+            Sign in to console
+          </button>
+        </form>
+
+        <p class="admin-hint">
+          <a href="../index.html" style="color: var(--a-teal); font-weight: 600"
+            >← Back to passenger site</a
+          >
+        </p>
+      </div>
     </div>
-    <h1>RouteLine Admin</h1>
-    <p class="lead">Manage buses, routes and payment records. This console is separate from the passenger site.</p>
 
-    <form id="loginForm">
-      <div class="admin-field">
-        <label for="email">Admin email</label>
-        <input type="email" id="email" value="admin@routeline.lk" required>
-      </div>
-      <div class="admin-field">
-        <label for="pw">Password</label>
-        <input type="password" id="pw" value="admin123" required>
-      </div>
-      <div id="loginError" style="display:none; color:#C1432E; font-size:13px; margin:-6px 0 14px;"></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;" id="loginBtn">Sign in to console</button>
-    </form>
-    <p class="admin-hint">Default seeded credentials: <code>admin@routeline.lk</code> / <code>admin123</code></p>
-    <p class="admin-hint"><a href="../index.html" style="color:var(--a-teal); font-weight:600;">← Back to passenger site</a></p>
-  </div>
-</div>
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/data.js"></script>
+    <script>
+      const loginForm = document.getElementById("loginForm");
+      const loginBtn = document.getElementById("loginBtn");
+      const errorBox = document.getElementById("loginError");
 
-<script src="../js/config.js"></script>
-<script src="../js/api.js"></script>
-<script src="../js/data.js"></script>
-<script>
-  const loginForm = document.getElementById('loginForm');
-  const loginBtn = document.getElementById('loginBtn');
-  const errorBox = document.getElementById('loginError');
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorBox.style.display = 'none';
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Signing in…';
-    try {
-      const { token, admin } = await RL.adminLoginRequest(
-        document.getElementById('email').value.trim(),
-        document.getElementById('pw').value
-      );
-      RL.adminLogin(token, admin);
-      window.location.href = 'dashboard.html';
-    } catch (err) {
-      errorBox.textContent = err.message || 'Could not sign in.';
-      errorBox.style.display = 'block';
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Sign in to console';
-    }
-  });
-</script>
-</body>
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorBox.style.display = "none";
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Signing in…";
+        try {
+          const { token, admin } = await RL.adminLoginRequest(
+            document.getElementById("email").value.trim(),
+            document.getElementById("pw").value,
+          );
+          RL.adminLogin(token, admin);
+          window.location.href = "dashboard.html";
+        } catch (err) {
+          errorBox.textContent = err.message || "Could not sign in.";
+          errorBox.style.display = "block";
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Sign in to console";
+        }
+      });
+    </script>
+  </body>
 </html>
