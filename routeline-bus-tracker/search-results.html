@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search buses — RouteLine</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg></span>
+      <span>RouteLine<small>Sri Lanka bus network</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="search-results.html" class="active">Find a bus</a></li>
+      <li><a href="track.html">Track live</a></li>
+      <li><a href="index.html#routes">Routes</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="hero" style="padding:36px 0 28px;">
+  <div class="wrap">
+    <div class="search-panel">
+      <div class="search-panel-label">Refine your search</div>
+      <form class="search-form" id="resultsSearchForm">
+        <div class="field">
+          <label for="from">From</label>
+          <select id="from" required></select>
+        </div>
+        <div class="field">
+          <label for="to">To</label>
+          <select id="to" required></select>
+        </div>
+        <div class="field">
+          <label for="date">Travel date</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="field" style="justify-content:flex-end;">
+          <button type="submit" class="btn btn-amber btn-block">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="route-line"></div>
+
+<section class="section" style="padding-top:36px;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-eyebrow" id="resultCount">—</span>
+        <h2 id="resultTitle">Buses on this route</h2>
+      </div>
+    </div>
+    <div id="busList"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <h3>No buses on this route yet</h3>
+      <p>Try a different pair of cities, or check the full route list from the home page.</p>
+      <a href="index.html" class="btn btn-outline">Back to home</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap footer-bottom">
+    <span>© 2026 RouteLine. Frontend demo — no real payments are processed.</span>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/results.js"></script>
+</body>
+</html>

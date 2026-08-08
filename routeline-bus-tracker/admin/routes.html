@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routes — RouteLine Admin</title>
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <div id="sidebarMount"></div>
+  <main class="admin-main">
+    <div id="topbarMount"></div>
+    <div class="admin-content">
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search origin or destination…">
+        </div>
+        <button class="btn btn-primary" id="addRouteBtn">+ Add route</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body" style="padding-top:20px;">
+          <table class="data-table">
+            <thead><tr><th>Route ID</th><th>From</th><th>To</th><th>Distance</th><th>Duration</th><th>Base fare</th><th>Buses</th><th></th></tr></thead>
+            <tbody id="routeTableBody"></tbody>
+          </table>
+          <div class="empty-state" id="routeEmpty" style="display:none;">No routes match your search.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="routeModalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">Add a route</h3>
+    <p class="modal-sub">New routes need at least one bus assigned before they appear in passenger search.</p>
+    <form id="routeForm">
+      <input type="hidden" id="routeId">
+      <div class="form-row">
+        <div class="form-field"><label for="from">From</label><input type="text" id="from" placeholder="Colombo" required></div>
+        <div class="form-field"><label for="to">To</label><input type="text" id="to" placeholder="Kandy" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label for="distance">Distance</label><input type="text" id="distance" placeholder="115 km" required></div>
+        <div class="form-field"><label for="duration">Duration</label><input type="text" id="duration" placeholder="3h 15m" required></div>
+      </div>
+      <div class="form-field"><label for="baseFare">Base fare (Rs.)</label><input type="number" id="baseFare" min="100" step="10" required></div>
+      <div class="form-field"><label for="stops">Stops (comma separated)</label><input type="text" id="stops" placeholder="Colombo Fort, Kadawatha, Kandy" required></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save route</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+(async () => {
+  const ok = await initAdminShell('routes', 'Routes', 'Route network');
+  if (!ok) return;
+
+  let routes, buses;
+  try {
+    [routes, buses] = await Promise.all([RL.getRoutes(), RL.getBuses()]);
+  } catch (err) {
+    showApiError(err);
+    return;
+  }
+  let query = '';
+
+  function busCount(routeId) { return buses.filter(b => b.routeId === routeId).length; }
+
+  function renderTable() {
+    const body = document.getElementById('routeTableBody');
+    const filtered = routes.filter(r => {
+      const q = query.toLowerCase();
+      return !q || r.from.toLowerCase().includes(q) || r.to.toLowerCase().includes(q);
+    });
+    document.getElementById('routeEmpty').style.display = filtered.length ? 'none' : 'block';
+    body.innerHTML = filtered.map(r => `
+      <tr>
+        <td class="mono">${r.id}</td>
+        <td>${escapeHtml(r.from)}</td>
+        <td>${escapeHtml(r.to)}</td>
+        <td>${r.distance}</td>
+        <td>${r.duration}</td>
+        <td>${RL.money(r.baseFare)}</td>
+        <td>${busCount(r.id)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-outline btn-sm" data-edit="${r.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-remove="${r.id}">Remove</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    body.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.edit)));
+    body.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => removeRoute(btn.dataset.remove)));
+  }
+
+  async function removeRoute(id) {
+    const r = routes.find(x => x.id === id);
+    if (!confirm(`Remove the ${r.from} → ${r.to} route?`)) return;
+    try {
+      await RL.deleteRoute(id);
+      routes = routes.filter(x => x.id !== id);
+      renderTable();
+    } catch (err) {
+      alert(err.message || 'Could not remove this route.');
+    }
+  }
+
+  const backdrop = document.getElementById('routeModalBackdrop');
+  const form = document.getElementById('routeForm');
+  const saveBtn = form.querySelector('button[type="submit"]');
+
+  function openModal(editId) {
+    form.reset();
+    if (editId) {
+      const r = routes.find(x => x.id === editId);
+      document.getElementById('modalTitle').textContent = `Edit ${r.from} → ${r.to}`;
+      document.getElementById('routeId').value = r.id;
+      document.getElementById('from').value = r.from;
+      document.getElementById('to').value = r.to;
+      document.getElementById('distance').value = r.distance;
+      document.getElementById('duration').value = r.duration;
+      document.getElementById('baseFare').value = r.baseFare;
+      document.getElementById('stops').value = r.stops.join(', ');
+    } else {
+      document.getElementById('modalTitle').textContent = 'Add a route';
+      document.getElementById('routeId').value = '';
+    }
+    backdrop.classList.add('open');
+  }
+  function closeModal() { backdrop.classList.remove('open'); }
+
+  document.getElementById('addRouteBtn').addEventListener('click', () => openModal(null));
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('routeId').value;
+    const stops = document.getElementById('stops').value.split(',').map(s => s.trim()).filter(Boolean);
+    const data = {
+      from: document.getElementById('from').value.trim(),
+      to: document.getElementById('to').value.trim(),
+      distance: document.getElementById('distance').value.trim(),
+      duration: document.getElementById('duration').value.trim(),
+      baseFare: Number(document.getElementById('baseFare').value),
+      stops,
+    };
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      if (id) {
+        const updated = await RL.updateRoute(id, data);
+        routes = routes.map(r => r.id === id ? updated : r);
+      } else {
+        const created = await RL.createRoute(data);
+        routes.push(created);
+      }
+      closeModal();
+      renderTable();
+    } catch (err) {
+      alert(err.message || 'Could not save this route.');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save route';
+    }
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
+
+  renderTable();
+})();
+</script>
+</body>
+</html>

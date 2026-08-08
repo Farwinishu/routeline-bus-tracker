@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment — RouteLine</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .pay-shell { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+  .pay-methods { display: flex; gap: 10px; margin-bottom: 22px; }
+  .pay-method {
+    flex: 1; border: 1.5px solid var(--line); border-radius: 8px; padding: 14px; text-align: center;
+    cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--muted); background: var(--white);
+  }
+  .pay-method.active { border-color: var(--teal); color: var(--teal); background: rgba(14,92,86,0.06); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .form-field label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .form-field input, .form-field select {
+    font-family: var(--font-body); font-size: 15px; padding: 11px 12px; border-radius: var(--radius);
+    border: 1.5px solid var(--line); background: var(--white); color: var(--ink);
+  }
+  .summary-line { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom: 1px solid var(--line); }
+  .summary-line:last-of-type { border-bottom: none; }
+  .secure-note { display:flex; align-items:center; gap:8px; font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg></span>
+      <span>RouteLine<small>Sri Lanka bus network</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="search-results.html">Find a bus</a></li>
+      <li><a href="track.html">Track live</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="section" style="padding-top:36px;">
+  <div class="wrap">
+    <span class="section-eyebrow">Checkout</span>
+    <h2 style="margin-bottom:26px;">Complete your payment</h2>
+
+    <div class="pay-shell">
+      <div class="panel">
+        <h3 style="font-size:16px; margin-bottom:16px;">Passenger details</h3>
+        <div class="form-grid" style="margin-bottom:24px;">
+          <div class="form-field"><label>Full name</label><input type="text" id="pName" placeholder="As per NIC" required></div>
+          <div class="form-field"><label>Mobile number</label><input type="tel" id="pPhone" placeholder="07X XXX XXXX" required></div>
+          <div class="form-field full"><label>Email</label><input type="email" id="pEmail" placeholder="you@example.com" required></div>
+        </div>
+
+        <h3 style="font-size:16px; margin-bottom:14px;">Payment method</h3>
+        <div class="pay-methods">
+          <div class="pay-method active" data-m="card">💳 Card</div>
+          <div class="pay-method" data-m="wallet">📱 Mobile wallet</div>
+          <div class="pay-method" data-m="counter">🏧 Pay at counter</div>
+        </div>
+
+        <div id="cardFields" class="form-grid">
+          <div class="form-field full"><label>Card number</label><input type="text" inputmode="numeric" placeholder="4111 1111 1111 1111" maxlength="19" id="cardNum" required></div>
+          <div class="form-field"><label>Expiry</label><input type="text" placeholder="MM/YY" maxlength="5" id="cardExp" required></div>
+          <div class="form-field"><label>CVV</label><input type="text" inputmode="numeric" placeholder="123" maxlength="3" id="cardCvv" required></div>
+          <div class="form-field full"><label>Name on card</label><input type="text" id="cardName" placeholder="J. PERERA" required></div>
+        </div>
+
+        <div id="walletFields" style="display:none;">
+          <div class="form-field"><label>Wallet</label>
+            <select id="walletProvider">
+              <option>eZ Cash</option><option>FriMi</option><option>Genie</option><option>mCash</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Linked mobile number</label><input type="tel" placeholder="07X XXX XXXX"></div>
+        </div>
+
+        <div id="counterFields" style="display:none; color: var(--muted); font-size: 14px;">
+          <p>Reserve your seats now and pay in cash at the boarding counter at least 20 minutes before departure. Your seat is held for 2 hours.</p>
+        </div>
+
+        <div class="secure-note">🔒 Payments are encrypted end-to-end. This is a demo checkout — no real charge is made.</div>
+      </div>
+
+      <aside class="ticket" style="padding:24px;">
+        <h3 style="margin-bottom:14px;">Order summary</h3>
+        <div class="summary-line"><span>Route</span><strong id="sumRoute">—</strong></div>
+        <div class="summary-line"><span>Bus</span><strong id="sumBus">—</strong></div>
+        <div class="summary-line"><span>Date</span><strong id="sumDate">—</strong></div>
+        <div class="summary-line"><span>Seats</span><strong id="sumSeats">—</strong></div>
+        <div class="summary-line"><span>Fare × seats</span><strong id="sumFareCalc">—</strong></div>
+        <div class="summary-line"><span>Service fee</span><strong id="sumFee">Rs. 50</strong></div>
+        <div class="summary-line" style="font-size:17px; padding-top:14px;"><span>Total</span><strong class="mono" id="sumTotal" style="color:var(--teal);">—</strong></div>
+        <button class="btn btn-amber btn-block" style="margin-top:16px;" id="payBtn">Pay &amp; confirm booking</button>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/payment.js"></script>
+</body>
+</html>

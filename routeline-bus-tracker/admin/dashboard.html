@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — RouteLine Admin</title>
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <div id="sidebarMount"></div>
+  <main class="admin-main">
+    <div id="topbarMount"></div>
+    <div class="admin-content">
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Recent bookings</h3>
+          <a href="payments.html" class="btn btn-outline btn-sm">View all payments</a>
+        </div>
+        <div class="panel-body">
+          <table class="data-table" id="recentTable">
+            <thead><tr><th>Booking</th><th>Passenger</th><th>Route</th><th>Seats</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="recentEmpty" style="display:none;">No bookings yet. Bookings made on the passenger site will show up here.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Fleet status</h3>
+          <a href="buses.html" class="btn btn-outline btn-sm">Manage buses</a>
+        </div>
+        <div class="panel-body">
+          <table class="data-table" id="fleetTable">
+            <thead><tr><th>Bus</th><th>Route</th><th>Class</th><th>Status</th><th>Live progress</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+(async () => {
+  const ok = await initAdminShell('dashboard', 'Dashboard', 'Overview');
+  if (!ok) return;
+
+  let buses, routes, bookings;
+  try {
+    [buses, routes, bookings] = await Promise.all([RL.getBuses(), RL.getRoutes(), RL.getBookings()]);
+  } catch (err) {
+    showApiError(err);
+    return;
+  }
+
+  const totalRevenue = bookings.reduce((sum, b) => sum + (b.total || 0), 0);
+  const activeBuses = buses.filter(b => b.status === 'active').length;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Active buses</div><div class="value">${activeBuses}</div><div class="delta">of ${buses.length} total</div></div>
+    <div class="stat-card"><div class="label">Routes</div><div class="value">${routes.length}</div><div class="delta">island-wide</div></div>
+    <div class="stat-card"><div class="label">Bookings today</div><div class="value">${bookings.length}</div><div class="delta">${bookings.length ? '+ live' : 'no bookings yet'}</div></div>
+    <div class="stat-card"><div class="label">Revenue</div><div class="value">${RL.money(totalRevenue)}</div><div class="delta">from ${bookings.length} bookings</div></div>
+  `;
+
+  const tbody = document.querySelector('#recentTable tbody');
+  if (bookings.length === 0) {
+    document.getElementById('recentEmpty').style.display = 'block';
+  } else {
+    tbody.innerHTML = bookings.slice(0, 8).map(b => `
+      <tr>
+        <td class="mono">${b.id}</td>
+        <td>${escapeHtml(b.passenger)}</td>
+        <td>${b.route}</td>
+        <td>${b.seats.join(', ')}</td>
+        <td>${RL.money(b.total)}</td>
+        <td><span class="pill success">${b.status}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  const fleetBody = document.querySelector('#fleetTable tbody');
+  fleetBody.innerHTML = buses.map(b => {
+    const r = routes.find(rt => rt.id === b.routeId);
+    return `
+      <tr>
+        <td><strong>${b.id}</strong><br><span class="mono" style="font-size:12px;color:var(--a-muted);">${b.plate}</span></td>
+        <td>${r ? `${r.from} → ${r.to}` : '—'}</td>
+        <td>${b.type}</td>
+        <td><span class="pill ${b.status}">${b.status}</span></td>
+        <td style="width:160px;">
+          <div style="background:var(--a-line); height:6px; border-radius:4px; overflow:hidden;">
+            <div style="width:${Math.round(b.progress*100)}%; background:var(--a-teal); height:100%;"></div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments — RouteLine Admin</title>
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <div id="sidebarMount"></div>
+  <main class="admin-main">
+    <div id="topbarMount"></div>
+    <div class="admin-content">
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search booking, passenger, route…">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body" style="padding-top:20px;">
+          <table class="data-table">
+            <thead><tr><th>Booking</th><th>Passenger</th><th>Route</th><th>Bus</th><th>Seats</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="payTableBody"></tbody>
+          </table>
+          <div class="empty-state" id="payEmpty" style="display:none;">No payment records yet. Once passengers complete checkout on the booking site, transactions will appear here.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+(async () => {
+  const ok = await initAdminShell('payments', 'Payments', 'Transaction records');
+  if (!ok) return;
+
+  let bookings;
+  try {
+    bookings = await RL.getBookings();
+  } catch (err) {
+    showApiError(err);
+    return;
+  }
+  let query = '';
+
+  const totalRevenue = bookings.reduce((s, b) => s + (b.total || 0), 0);
+  const totalSeats = bookings.reduce((s, b) => s + b.seats.length, 0);
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Total transactions</div><div class="value">${bookings.length}</div></div>
+    <div class="stat-card"><div class="label">Total revenue</div><div class="value">${RL.money(totalRevenue)}</div></div>
+    <div class="stat-card"><div class="label">Seats sold</div><div class="value">${totalSeats}</div></div>
+    <div class="stat-card"><div class="label">Avg. fare / booking</div><div class="value">${bookings.length ? RL.money(Math.round(totalRevenue/bookings.length)) : 'Rs. 0'}</div></div>
+  `;
+
+  function renderTable() {
+    const body = document.getElementById('payTableBody');
+    const q = query.toLowerCase();
+    const filtered = bookings.filter(b =>
+      !q || b.id.toLowerCase().includes(q) || b.passenger.toLowerCase().includes(q) || b.route.toLowerCase().includes(q)
+    );
+    document.getElementById('payEmpty').style.display = filtered.length ? 'none' : 'block';
+    body.innerHTML = filtered.map(b => `
+      <tr>
+        <td class="mono">${b.id}</td>
+        <td>${escapeHtml(b.passenger)}<br><span style="color:var(--a-muted); font-size:12px;">${escapeHtml(b.phone || '')}</span></td>
+        <td>${b.route}</td>
+        <td class="mono">${b.plate}</td>
+        <td>${b.seats.join(', ')}</td>
+        <td>${b.date}</td>
+        <td>${RL.money(b.total)}</td>
+        <td><span class="pill success">${b.status}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
+  renderTable();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select seats — RouteLine</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .seat-shell { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+  .bus-layout {
+    background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 26px 30px 30px;
+  }
+  .bus-layout-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; }
+  .wheel-note { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+  .seat-grid {
+    display: grid; grid-template-columns: repeat(4, 44px) 30px; gap: 10px; justify-content: center; margin-top: 10px;
+  }
+  .seat-grid .aisle-gap { }
+  .seat {
+    width: 44px; height: 44px; border-radius: 6px 6px 10px 10px; border: 1.5px solid var(--line);
+    background: var(--paper-dim); display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--muted);
+    cursor: pointer; position: relative; transition: transform .1s ease;
+  }
+  .seat:hover:not(.booked) { transform: translateY(-2px); }
+  .seat.selected { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .seat.booked { background: #EDE7D8; color: #B7AE99; cursor: not-allowed; border-style: dashed; }
+  .seat.favorite::after {
+    content: '★'; position: absolute; top: -7px; right: -6px; font-size: 12px; color: var(--amber);
+    text-shadow: 0 0 2px rgba(0,0,0,0.4);
+  }
+  .star-toggle {
+    position: absolute; bottom: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--white); border: 1px solid var(--line); font-size: 9px; display: flex; align-items:center; justify-content:center;
+    cursor: pointer;
+  }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 16px; height: 16px; border-radius: 4px; display:inline-block; border: 1.5px solid var(--line); }
+  .legend .i-avail { background: var(--paper-dim); }
+  .legend .i-sel { background: var(--teal); border-color: var(--teal); }
+  .legend .i-booked { background: #EDE7D8; border-style:dashed; }
+  .driver-badge {
+    width: 44px; height: 44px; border-radius: 6px; border: 1.5px dashed var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; margin: 0 0 16px auto;
+  }
+  .summary-line { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom: 1px solid var(--line); }
+  .summary-line:last-of-type { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg></span>
+      <span>RouteLine<small>Sri Lanka bus network</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="search-results.html">Find a bus</a></li>
+      <li><a href="track.html">Track live</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="section" style="padding-top:36px;">
+  <div class="wrap">
+    <span class="section-eyebrow" id="routeLabel">Select seats</span>
+    <h2 id="busLabel" style="margin-bottom: 26px;">Loading bus…</h2>
+
+    <div class="seat-shell">
+      <div class="bus-layout">
+        <div class="bus-layout-head">
+          <div>
+            <strong>Choose your seats</strong>
+            <div class="wheel-note">Tap the star to save a seat as a favourite for next time.</div>
+          </div>
+          <span class="badge-live" style="color:var(--teal);"><span class="dot" style="background:var(--teal);"></span> <span id="seatsLeftLabel">— left</span></span>
+        </div>
+        <div class="driver-badge" title="Driver">🚍</div>
+        <div class="seat-grid" id="seatGrid"></div>
+        <div class="legend">
+          <span><i class="i-avail"></i> Available</span>
+          <span><i class="i-sel"></i> Selected</span>
+          <span><i class="i-booked"></i> Already booked</span>
+          <span>★ Your favourite</span>
+        </div>
+      </div>
+
+      <aside class="ticket" style="padding: 24px;">
+        <h3 style="margin-bottom:14px;">Booking summary</h3>
+        <div class="summary-line"><span>Route</span><strong id="sumRoute">—</strong></div>
+        <div class="summary-line"><span>Bus</span><strong id="sumBus">—</strong></div>
+        <div class="summary-line"><span>Class</span><strong id="sumClass">—</strong></div>
+        <div class="summary-line"><span>Date</span><strong id="sumDate">—</strong></div>
+        <div class="summary-line"><span>Seats</span><strong id="sumSeats">None selected</strong></div>
+        <div class="summary-line"><span>Fare per seat</span><strong id="sumFare">—</strong></div>
+        <div class="summary-line" style="font-size:17px; padding-top:14px;"><span>Total</span><strong class="mono" id="sumTotal" style="color:var(--teal);">Rs. 0</strong></div>
+        <a href="#" class="btn btn-amber btn-block" id="continueBtn" style="margin-top:16px;">Continue to payment</a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/seats.js"></script>
+</body>
+</html>

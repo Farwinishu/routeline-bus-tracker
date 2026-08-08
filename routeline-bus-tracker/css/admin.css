@@ -1,0 +1,185 @@
+/* ============================================================
+   RouteLine Admin Console
+   Deliberately distinct shell from the public site: fixed dark
+   sidebar + light workspace, so admin never feels mixed with
+   the passenger-facing pages.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root {
+  --a-ink: #0F1B17;
+  --a-sidebar: #102420;
+  --a-paper: #F6F4EE;
+  --a-teal: #0E5C56;
+  --a-amber: #F2A93B;
+  --a-red: #C1432E;
+  --a-line: #E1DCCC;
+  --a-muted: #756C5E;
+  --a-white: #FFFFFF;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--a-paper); color: var(--a-ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; margin: 0 0 .4em; letter-spacing: -0.01em; }
+a { color: inherit; }
+.mono { font-family: var(--font-mono); }
+:focus-visible { outline: 2px solid var(--a-amber); outline-offset: 2px; }
+
+/* ---------- login screen ---------- */
+.admin-login-shell {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--a-sidebar);
+  background-image:
+    linear-gradient(rgba(246,244,238,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(246,244,238,0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  padding: 24px;
+}
+.admin-login-card {
+  width: 100%; max-width: 380px; background: var(--a-paper); border-radius: 10px; padding: 36px 32px;
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.5);
+}
+.admin-login-mark {
+  width: 42px; height: 42px; border-radius: 50%; background: var(--a-teal); color: var(--a-white);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+}
+.admin-login-card h1 { font-size: 22px; }
+.admin-login-card p.lead { color: var(--a-muted); font-size: 14px; margin-bottom: 26px; }
+.admin-field { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+.admin-field label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--a-muted); }
+.admin-field input, .admin-field select {
+  font-family: var(--font-body); font-size: 15px; padding: 11px 12px; border-radius: 5px;
+  border: 1.5px solid var(--a-line); background: var(--a-white); color: var(--a-ink);
+}
+.admin-hint { font-size: 12.5px; color: var(--a-muted); margin-top: 16px; text-align: center; }
+.admin-hint code { background: rgba(14,92,86,0.08); color: var(--a-teal); padding: 2px 6px; border-radius: 4px; }
+
+/* ---------- shell layout ---------- */
+.admin-shell { display: flex; min-height: 100vh; }
+.admin-sidebar {
+  width: 236px; flex-shrink: 0; background: var(--a-sidebar); color: var(--a-paper);
+  padding: 22px 16px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+}
+.admin-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 22px; }
+.admin-brand-mark { width: 30px; height: 30px; border-radius: 50%; background: var(--a-teal); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.admin-brand div strong { display: block; font-family: var(--font-display); font-size: 16px; }
+.admin-brand div small { display: block; font-size: 10.5px; color: rgba(246,244,238,0.5); text-transform: uppercase; letter-spacing: .08em; }
+
+.admin-nav { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.admin-nav a {
+  display: flex; align-items: center; gap: 10px; text-decoration: none; color: rgba(246,244,238,0.75);
+  font-weight: 600; font-size: 14px; padding: 10px 12px; border-radius: 6px;
+}
+.admin-nav a svg { flex-shrink: 0; opacity: .85; }
+.admin-nav a:hover { background: rgba(246,244,238,0.06); color: var(--a-paper); }
+.admin-nav a.active { background: var(--a-teal); color: var(--a-white); }
+.admin-sidebar-foot { padding-top: 16px; border-top: 1px solid rgba(246,244,238,0.12); }
+.admin-sidebar-foot a { display: flex; align-items: center; gap: 8px; color: rgba(246,244,238,0.6); text-decoration: none; font-size: 13px; padding: 8px 12px; }
+.admin-sidebar-foot a:hover { color: var(--a-red); }
+
+.admin-main { flex: 1; min-width: 0; }
+.admin-topbar {
+  display: flex; align-items: center; justify-content: space-between; padding: 18px 32px;
+  border-bottom: 1px solid var(--a-line); background: var(--a-white);
+  position: sticky; top: 0; z-index: 5;
+}
+.admin-topbar h1 { font-size: 21px; }
+.admin-topbar .eyebrow { font-family: var(--font-mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--a-teal); display: block; margin-bottom: 2px; }
+.admin-content { padding: 28px 32px 60px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-body); font-weight: 700; font-size: 14px;
+  padding: 10px 18px; border-radius: 5px; border: 1.5px solid transparent;
+  cursor: pointer; text-decoration: none;
+}
+.btn-primary { background: var(--a-teal); color: var(--a-white); }
+.btn-primary:hover { background: #0a4440; }
+.btn-outline { background: transparent; border-color: var(--a-line); color: var(--a-ink); }
+.btn-outline:hover { border-color: var(--a-ink); }
+.btn-danger { background: transparent; border-color: var(--a-red); color: var(--a-red); }
+.btn-danger:hover { background: var(--a-red); color: var(--a-white); }
+.btn-sm { padding: 7px 12px; font-size: 12.5px; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ---------- stat cards ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+.stat-card { background: var(--a-white); border: 1px solid var(--a-line); border-radius: 8px; padding: 20px; }
+.stat-card .label { font-family: var(--font-mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--a-muted); margin-bottom: 10px; }
+.stat-card .value { font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.stat-card .delta { font-size: 12.5px; color: var(--a-teal); font-weight: 600; margin-top: 6px; }
+.stat-card .delta.down { color: var(--a-red); }
+
+/* ---------- panels & tables ---------- */
+.panel { background: var(--a-white); border: 1px solid var(--a-line); border-radius: 8px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--a-line); }
+.panel-head h3 { font-size: 16px; margin: 0; }
+.panel-body { padding: 4px 22px 22px; }
+.panel + .panel { margin-top: 20px; }
+
+table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th { text-align: left; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--a-muted); padding: 12px; border-bottom: 1.5px solid var(--a-ink); white-space: nowrap; }
+.data-table td { padding: 13px 12px; border-bottom: 1px solid var(--a-line); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 9px; border-radius: 100px; }
+.pill.active, .pill.success { background: rgba(14,92,86,0.1); color: var(--a-teal); }
+.pill.inactive, .pill.pending { background: rgba(242,169,59,0.18); color: #8a5a10; }
+.pill.failed { background: rgba(193,67,46,0.1); color: var(--a-red); }
+
+/* ---------- form / modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,27,23,0.55); display: none;
+  align-items: center; justify-content: center; z-index: 100; padding: 20px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--a-white); border-radius: 10px; width: 100%; max-width: 480px;
+  max-height: 90vh; overflow-y: auto; padding: 26px;
+}
+.modal h3 { font-size: 18px; margin-bottom: 4px; }
+.modal .modal-sub { color: var(--a-muted); font-size: 13px; margin-bottom: 20px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--a-muted); }
+.form-field input, .form-field select {
+  font-family: var(--font-body); font-size: 14.5px; padding: 10px 11px; border-radius: 5px;
+  border: 1.5px solid var(--a-line); background: var(--a-white); color: var(--a-ink);
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.search-box { position: relative; }
+.search-box input {
+  padding: 9px 14px 9px 34px; border-radius: 6px; border: 1.5px solid var(--a-line); font-size: 14px; width: 240px;
+}
+.search-box svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); opacity: .5; }
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--a-muted); }
+
+.api-error-banner {
+  background: #C1432E; color: #fff; padding: 12px 20px; font-size: 14px; text-align: center;
+  font-weight: 600; position: sticky; top: 0; z-index: 200;
+}
+.api-error-banner code { background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono); }
+.api-error-banner a { color: #fff; text-decoration: underline; }
+
+@media (max-width: 1000px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .admin-sidebar { position: fixed; left: -240px; z-index: 50; transition: left .2s ease; }
+  .admin-sidebar.open { left: 0; }
+}
+@media (max-width: 640px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .admin-content, .admin-topbar { padding-left: 16px; padding-right: 16px; }
+}

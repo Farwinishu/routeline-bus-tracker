@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buses — RouteLine Admin</title>
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <div id="sidebarMount"></div>
+  <main class="admin-main">
+    <div id="topbarMount"></div>
+    <div class="admin-content">
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search plate, operator, driver…">
+        </div>
+        <button class="btn btn-primary" id="addBusBtn">+ Add bus</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body" style="padding-top:20px;">
+          <table class="data-table">
+            <thead><tr><th>Bus ID</th><th>Plate</th><th>Operator</th><th>Class</th><th>Route</th><th>Driver</th><th>Status</th><th></th></tr></thead>
+            <tbody id="busTableBody"></tbody>
+          </table>
+          <div class="empty-state" id="busEmpty" style="display:none;">No buses match your search.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit modal -->
+<div class="modal-backdrop" id="busModalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">Add a bus</h3>
+    <p class="modal-sub">Buses are assigned to one route and appear immediately in search results.</p>
+    <form id="busForm">
+      <input type="hidden" id="busId">
+      <div class="form-row">
+        <div class="form-field"><label for="plate">Plate number</label><input type="text" id="plate" placeholder="NB-1234" required></div>
+        <div class="form-field"><label for="name">Operator name</label><input type="text" id="name" placeholder="Operator" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label for="type">Class</label>
+          <select id="type"><option>Luxury A/C</option><option>Semi-Luxury</option><option>Normal</option></select>
+        </div>
+        <div class="form-field"><label for="routeId">Route</label><select id="routeId"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label for="capacity">Seat capacity</label><input type="number" id="capacity" min="20" max="60" value="48" required></div>
+        <div class="form-field"><label for="departure">Departure time</label><input type="text" id="departure" placeholder="6:30 AM" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label for="driver">Driver</label><input type="text" id="driver" placeholder="Driver name" required></div>
+        <div class="form-field"><label for="status">Status</label>
+          <select id="status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save bus</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+(async () => {
+  const ok = await initAdminShell('buses', 'Buses', 'Fleet management');
+  if (!ok) return;
+
+  let routes, buses;
+  try {
+    [routes, buses] = await Promise.all([RL.getRoutes(), RL.getBuses()]);
+  } catch (err) {
+    showApiError(err);
+    return;
+  }
+
+  const routeSel = document.getElementById('routeId');
+  routes.forEach(r => routeSel.insertAdjacentHTML('beforeend', `<option value="${r.id}">${r.from} → ${r.to}</option>`));
+
+  let query = '';
+
+  function routeName(id) {
+    const r = routes.find(x => x.id === id);
+    return r ? `${r.from} → ${r.to}` : '—';
+  }
+
+  function renderTable() {
+    const body = document.getElementById('busTableBody');
+    const filtered = buses.filter(b => {
+      const q = query.toLowerCase();
+      return !q || b.plate.toLowerCase().includes(q) || b.name.toLowerCase().includes(q) || b.driver.toLowerCase().includes(q);
+    });
+    document.getElementById('busEmpty').style.display = filtered.length ? 'none' : 'block';
+    body.innerHTML = filtered.map(b => `
+      <tr>
+        <td class="mono">${b.id}</td>
+        <td class="mono">${escapeHtml(b.plate)}</td>
+        <td>${escapeHtml(b.name)}</td>
+        <td>${b.type}</td>
+        <td>${routeName(b.routeId)}</td>
+        <td>${escapeHtml(b.driver)}</td>
+        <td><span class="pill ${b.status}">${b.status}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-outline btn-sm" data-edit="${b.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-remove="${b.id}">Remove</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.edit)));
+    body.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => removeBus(btn.dataset.remove)));
+  }
+
+  async function removeBus(id) {
+    const bus = buses.find(b => b.id === id);
+    if (!confirm(`Remove bus ${bus.plate} (${bus.id}) from the fleet?`)) return;
+    try {
+      await RL.deleteBus(id);
+      buses = buses.filter(b => b.id !== id);
+      renderTable();
+    } catch (err) {
+      alert(err.message || 'Could not remove this bus.');
+    }
+  }
+
+  const backdrop = document.getElementById('busModalBackdrop');
+  const form = document.getElementById('busForm');
+  const saveBtn = form.querySelector('button[type="submit"]');
+
+  function openModal(editId) {
+    form.reset();
+    if (editId) {
+      const b = buses.find(x => x.id === editId);
+      document.getElementById('modalTitle').textContent = `Edit ${b.id}`;
+      document.getElementById('busId').value = b.id;
+      document.getElementById('plate').value = b.plate;
+      document.getElementById('name').value = b.name;
+      document.getElementById('type').value = b.type;
+      document.getElementById('routeId').value = b.routeId;
+      document.getElementById('capacity').value = b.capacity;
+      document.getElementById('departure').value = b.departure;
+      document.getElementById('driver').value = b.driver;
+      document.getElementById('status').value = b.status;
+    } else {
+      document.getElementById('modalTitle').textContent = 'Add a bus';
+      document.getElementById('busId').value = '';
+    }
+    backdrop.classList.add('open');
+  }
+  function closeModal() { backdrop.classList.remove('open'); }
+
+  document.getElementById('addBusBtn').addEventListener('click', () => openModal(null));
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('busId').value;
+    const data = {
+      plate: document.getElementById('plate').value.trim(),
+      name: document.getElementById('name').value.trim(),
+      type: document.getElementById('type').value,
+      routeId: document.getElementById('routeId').value,
+      capacity: Number(document.getElementById('capacity').value),
+      departure: document.getElementById('departure').value.trim(),
+      driver: document.getElementById('driver').value.trim(),
+      status: document.getElementById('status').value,
+    };
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      if (id) {
+        const updated = await RL.updateBus(id, data);
+        buses = buses.map(b => b.id === id ? updated : b);
+      } else {
+        const created = await RL.createBus(data);
+        buses.push(created);
+      }
+      closeModal();
+      renderTable();
+    } catch (err) {
+      alert(err.message || 'Could not save this bus.');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save bus';
+    }
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
+
+  renderTable();
+})();
+</script>
+</body>
+</html>

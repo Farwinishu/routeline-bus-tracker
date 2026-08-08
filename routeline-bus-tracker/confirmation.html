@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking confirmed — RouteLine</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .confirm-wrap { max-width: 480px; margin: 56px auto; padding: 0 20px; }
+  .confirm-check {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center; margin: 0 auto 18px; font-size: 26px;
+  }
+  .e-ticket { padding: 28px; }
+  .e-ticket .row { display:flex; justify-content:space-between; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 14.5px; }
+  .e-ticket .row:last-child { border-bottom: none; }
+  .e-ticket .row span:first-child { color: var(--muted); }
+  .code { text-align:center; padding: 18px 0; }
+  .code .id { font-family: var(--font-mono); font-size: 22px; letter-spacing: .06em; color: var(--teal); font-weight: 700; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg></span>
+      <span>RouteLine<small>Sri Lanka bus network</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="search-results.html">Find a bus</a></li>
+      <li><a href="track.html">Track live</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="confirm-wrap">
+  <div class="confirm-check">✓</div>
+  <h2 style="text-align:center;">Booking confirmed</h2>
+  <p style="text-align:center; margin-bottom:28px;">Your e-ticket is below. Show the booking code to the conductor when boarding.</p>
+
+  <div class="ticket e-ticket" id="ticketBox">
+    <div class="code">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:4px;">Booking code</div>
+      <div class="id" id="tCode">—</div>
+    </div>
+    <div class="ticket-perf" style="left:0;"></div>
+    <div class="row"><span>Route</span><span id="tRoute">—</span></div>
+    <div class="row"><span>Bus</span><span id="tBus">—</span></div>
+    <div class="row"><span>Date</span><span id="tDate">—</span></div>
+    <div class="row"><span>Seats</span><span id="tSeats">—</span></div>
+    <div class="row"><span>Passenger</span><span id="tPassenger">—</span></div>
+    <div class="row"><span>Total paid</span><strong id="tTotal" style="color:var(--teal);">—</strong></div>
+  </div>
+
+  <div style="display:flex; gap:12px; margin-top:24px;">
+    <a href="track.html" class="btn btn-outline btn-block" id="trackLink">Track this bus</a>
+    <a href="index.html" class="btn btn-primary btn-block">Back to home</a>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script>
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const bkId = params.get('bk');
+    if (!bkId) return;
+    let booking;
+    try {
+      booking = await RL.getBooking(bkId);
+    } catch (err) {
+      showApiError(err);
+      return;
+    }
+    document.getElementById('tCode').textContent = booking.id;
+    document.getElementById('tRoute').textContent = booking.route;
+    document.getElementById('tBus').textContent = `${booking.operator} · ${booking.plate}`;
+    document.getElementById('tDate').textContent = booking.date;
+    document.getElementById('tSeats').textContent = booking.seats.join(', ');
+    document.getElementById('tPassenger').textContent = booking.passenger;
+    document.getElementById('tTotal').textContent = RL.money(booking.total);
+    document.getElementById('trackLink').href = `track.html?bus=${booking.busId}`;
+  })();
+</script>
+</body>
+</html>

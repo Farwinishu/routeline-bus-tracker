@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track live — RouteLine</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .track-shell { display: grid; grid-template-columns: 340px 1fr; gap: 0; height: calc(100vh - 65px); }
+  #map { width: 100%; height: 100%; background: #eee; }
+  .track-side { border-right: 1px solid var(--line); background: var(--white); overflow-y: auto; padding: 22px; }
+  .track-bus-select { margin-bottom: 18px; }
+  .track-bus-select select { width:100%; font-family: var(--font-body); font-size: 15px; font-weight:600; padding: 10px 12px; border-radius: var(--radius); border: 1.5px solid var(--line); }
+  .eta-box { background: var(--ink); color: var(--paper); border-radius: 8px; padding: 18px; margin-bottom: 18px; }
+  .eta-box .lbl { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: rgba(251,247,238,0.55); margin-bottom: 4px; }
+  .eta-box .val { font-family: var(--font-display); font-size: 26px; }
+  .stop-list { list-style: none; margin: 0; padding: 0; }
+  .stop-list li { position: relative; padding: 0 0 22px 26px; }
+  .stop-list li::before {
+    content: ''; position: absolute; left: 4px; top: 4px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--line); border: 2px solid var(--white); box-shadow: 0 0 0 1.5px var(--line);
+  }
+  .stop-list li::after {
+    content: ''; position: absolute; left: 8px; top: 14px; bottom: -4px; width: 2px; background: var(--line);
+  }
+  .stop-list li:last-child::after { display: none; }
+  .stop-list li.passed::before { background: var(--teal); box-shadow: 0 0 0 1.5px var(--teal); }
+  .stop-list li.passed::after { background: var(--teal); }
+  .stop-list li.current::before { background: var(--red); box-shadow: 0 0 0 3px rgba(193,67,46,0.25); }
+  .stop-list .stop-name { font-weight: 700; font-size: 14.5px; }
+  .stop-list .stop-time { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .bus-popup { font-family: var(--font-body); }
+  .bus-popup strong { font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9" stroke="#FBF7EE" stroke-width="1.8" stroke-linecap="round"/><rect x="4" y="12" width="16" height="6" rx="1.2" stroke="#FBF7EE" stroke-width="1.8"/></svg></span>
+      <span>RouteLine<small>Sri Lanka bus network</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="search-results.html">Find a bus</a></li>
+      <li><a href="track.html" class="active">Track live</a></li>
+      <li><a href="index.html#routes">Routes</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="track-shell">
+  <aside class="track-side">
+    <span class="badge-live"><span class="dot"></span> Live tracking</span>
+    <h2 style="margin-top:10px; font-size:22px;">Where's my bus?</h2>
+
+    <div class="track-bus-select">
+      <label for="busSelect" style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:block; margin-bottom:6px;">Choose a bus</label>
+      <select id="busSelect"></select>
+    </div>
+
+    <div class="eta-box">
+      <div class="lbl">Estimated arrival</div>
+      <div class="val" id="etaVal">—</div>
+      <div class="lbl" style="margin-top:10px;">Next stop</div>
+      <div style="font-weight:600;" id="nextStopVal">—</div>
+    </div>
+
+    <div class="panel" style="padding:16px; margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px;"><span style="color:var(--muted);">Plate no.</span><strong class="mono" id="infoPlate">—</strong></div>
+      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px;"><span style="color:var(--muted);">Operator</span><strong id="infoOperator">—</strong></div>
+      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px;"><span style="color:var(--muted);">Class</span><strong id="infoClass">—</strong></div>
+      <div style="display:flex; justify-content:space-between; font-size:13.5px;"><span style="color:var(--muted);">Speed</span><strong id="infoSpeed">—</strong></div>
+    </div>
+
+    <a href="#" class="btn btn-primary btn-block" id="bookThisBus">Book a seat on this bus</a>
+
+    <h4 style="margin-top:26px; font-size:15px;">Route stops</h4>
+    <ul class="stop-list" id="stopList"></ul>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/data.js"></script>
+<script src="js/track.js"></script>
+</body>
+</html>
